@@ -32,8 +32,8 @@ Why it can't error anymore:
 Create → **Pages** → connect the repo → Build command EMPTY, Output directory `public`.
 No wrangler.toml / package.json needed there.
 
-## Demo logins
-- Admin — ID `admin` · PIN `1234`
-- Workers — `raju01`/`1111`, `suresh02`/`2222`, `amit03`/`3333`, `kiran04`/`4444`
+## Using the prototype
+Opens straight into the **owner console** — no login (this is a demo prototype, not the full app).
+The **switch-view button** (bottom-left of the sidebar, and the exit icon in the worker app) flips between the owner console and the worker app so you can show both roles.
 
-Front-end demo only — data resets on refresh. No Firebase connection, so no Firestore rules apply yet.
+Demo data only — everything resets on refresh. The floor sees party **codes** (P-07…), never party names. No Firebase connection, so no Firestore rules apply yet.

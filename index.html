@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d1626">
+</head>
+<body>
+<title>Alive Engineering Floor</title>
+<meta name="description" content="Premium production-control dashboard for Alive Engineering — live orders, 200+ products with per-machine cycle times, up to 10 machines, worker time study, accounting, monthly reports and 5-year backup, with a phone-first worker app.">
+
+
+<style>
+  /* ============================================================
+     ALIVE ENGINEERING — production control
+     A precision-instrument look for a CNC shop floor: deep slate
+     sidebar, bright crisp workspace, one confident blue accent +
+     a steel-violet for machine-time. Sora / Inter / JetBrains Mono.
+     Dark theme behind the toggle. Responsive (sidebar → drawer).
+     ============================================================ */
+  :root{
+    --bg:#eef2f7; --surface:#ffffff; --surface-2:#f4f7fb; --surface-3:#eaeef4;
+    --line:#e2e8f1; --line-soft:#edf1f6;
+    --fg:#101828; --fg-dim:#596579; --fg-faint:#8b97aa;
+    --accent:#2f6bff; --accent-dim:#1f55e0; --accent-bg:#e8f0ff; --accent-ink:#ffffff;
+    --violet:#6a5cff; --violet-bg:#edeaff;
+    --run:#2f6bff; --run-bg:#e8f0ff;
+    --done:#0f9d58; --done-bg:#e3f6ec;
+    --ready:#d98a00; --ready-bg:#fcf0d9;
+    --reject:#e23d3d; --reject-bg:#fdeaea;
+    --sidebar:#0d1626; --sidebar-2:#15223a; --sidebar-3:#1c2d49;
+    --sidebar-fg:#e7edf6; --sidebar-dim:#8a9cba; --sidebar-faint:#5b6c8a; --sidebar-line:#1f2f4d;
+    --radius:14px; --radius-sm:10px; --radius-xs:8px;
+    --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+    --shadow:0 2px 6px rgba(16,24,40,.06),0 8px 24px rgba(16,24,40,.06);
+    --shadow-lg:0 18px 50px rgba(16,24,40,.18);
+    --font-display:"Sora",ui-sans-serif,system-ui,sans-serif;
+    --font-body:"Inter",ui-sans-serif,system-ui,sans-serif;
+    --font-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+    color-scheme:light;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0a0f1a; --surface:#111a2b; --surface-2:#0e1626; --surface-3:#172339;
+    --line:#223150; --line-soft:#1a2740;
+    --fg:#eaf0f8; --fg-dim:#9fb0c9; --fg-faint:#64748f;
+    --accent:#4d84ff; --accent-dim:#3a72f0; --accent-bg:rgba(77,132,255,.15); --accent-ink:#0a0f1a;
+    --violet:#8b7dff; --violet-bg:rgba(139,125,255,.16);
+    --run:#4d84ff; --run-bg:rgba(77,132,255,.15);
+    --done:#2bbd73; --done-bg:rgba(43,189,115,.16);
+    --ready:#eda32e; --ready-bg:rgba(237,163,46,.16);
+    --reject:#ff5d5d; --reject-bg:rgba(255,93,93,.15);
+    --sidebar:#070c16; --sidebar-2:#0f1a2c; --sidebar-3:#16233b; --sidebar-line:#18263f;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow:0 2px 8px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.4);
+    --shadow-lg:0 24px 60px rgba(0,0,0,.6);
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box;} html,body{height:100%;} [hidden]{display:none !important;}
+  body{margin:0;font-family:var(--font-body);background:var(--bg);color:var(--fg);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4{font-family:var(--font-display);margin:0;letter-spacing:-.015em;text-wrap:balance;}
+  button{font-family:inherit;cursor:pointer;} input,select,textarea{font-family:inherit;}
+  a{color:inherit;}
+  .mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+  .eyebrow{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-faint);}
+  ::-webkit-scrollbar{width:10px;height:10px;} ::-webkit-scrollbar-thumb{background:var(--line);border-radius:20px;border:3px solid transparent;background-clip:padding-box;}
+
+  /* ===================== LOGIN ===================== */
+  #login{position:fixed;inset:0;z-index:50;display:grid;grid-template-columns:1.05fr .95fr;background:var(--bg);}
+  #stage-wrap{position:relative;overflow:hidden;background:linear-gradient(160deg,#0d1626,#15223a 60%,#1c2d49);}
+  #three-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .stage-grid{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:46px 46px;mask-image:radial-gradient(75% 75% at 50% 45%,#000 40%,transparent 85%);}
+  .stage-tag{position:absolute;left:30px;bottom:28px;color:#dbe6f7;}
+  .stage-tag .eyebrow{color:#7f93b4;} .stage-tag .big{font-family:var(--font-display);font-size:19px;font-weight:600;margin-top:5px;}
+  .stage-badge{position:absolute;top:26px;left:30px;display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;color:#9fe3c6;background:rgba(15,157,88,.14);border:1px solid rgba(15,157,88,.3);padding:5px 11px;border-radius:20px;}
+  .stage-badge .liv{width:7px;height:7px;border-radius:50%;background:#2bbd73;box-shadow:0 0 0 0 rgba(43,189,115,.5);animation:pulse 2s infinite;}
+  @keyframes pulse{70%{box-shadow:0 0 0 7px rgba(43,189,115,0);}100%{box-shadow:0 0 0 0 rgba(43,189,115,0);}}
+  #login-panel{display:flex;flex-direction:column;justify-content:center;gap:26px;padding:48px clamp(30px,6vw,88px);max-width:580px;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,var(--accent),#5b86ff);display:grid;place-items:center;color:#fff;box-shadow:0 6px 18px rgba(47,107,255,.35);}
+  .brand-mark svg{width:23px;height:23px;}
+  .brand .name{font-family:var(--font-display);font-weight:700;font-size:16px;line-height:1.1;}
+  .brand .by{font-size:11.5px;color:var(--fg-faint);}
+  #login-panel h1{font-size:clamp(30px,4.2vw,44px);font-weight:700;line-height:1.05;}
+  #login-panel .lead{color:var(--fg-dim);font-size:15px;max-width:44ch;margin-top:12px;}
+  .role-pick{display:grid;gap:12px;}
+  .role-card{display:flex;align-items:center;gap:15px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:var(--radius);padding:17px 18px;color:var(--fg);transition:border-color .16s,transform .14s,box-shadow .16s;box-shadow:var(--shadow-sm);}
+  .role-card:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow);}
+  .role-card .ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;background:var(--accent-bg);color:var(--accent);flex:none;}
+  .role-card .ico svg{width:23px;height:23px;}
+  .role-card > span:not(.ico):not(.arr){flex:1;min-width:0;}
+  .role-card .rt{display:block;font-weight:600;font-family:var(--font-display);font-size:15.5px;}
+  .role-card .rd{display:block;font-size:12.5px;color:var(--fg-dim);margin-top:3px;}
+  .role-card .arr{margin-left:auto;color:var(--fg-faint);} .role-card:hover .arr{color:var(--accent);transform:translateX(2px);} .role-card .arr{transition:transform .14s;} .role-card .arr svg{width:20px;height:20px;}
+  .login-note{font-size:12.5px;color:var(--fg-faint);display:flex;align-items:center;gap:9px;}
+  .login-note svg{width:16px;height:16px;flex:none;color:var(--accent);}
+  /* login form (credential gate) */
+  #loginForm{display:flex;flex-direction:column;gap:15px;max-width:400px;}
+  .lf-back{align-self:flex-start;border:none;background:none;color:var(--fg-dim);font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px;padding:4px 0;} .lf-back:hover{color:var(--accent);} .lf-back svg{width:16px;height:16px;}
+  .lf-head{display:flex;align-items:center;gap:13px;}
+  .lf-ico{width:46px;height:46px;border-radius:12px;background:var(--accent-bg);color:var(--accent);display:grid;place-items:center;flex:none;} .lf-ico svg{width:23px;height:23px;}
+  .lf-title{font-family:var(--font-display);font-weight:700;font-size:19px;} .lf-sub{font-size:12.5px;color:var(--fg-dim);margin-top:2px;}
+  .lf-field label{display:block;font-size:11px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:6px;}
+  .lf-field input{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:15px;} .lf-field input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent);}
+  .lf-err{font-size:12.5px;color:var(--reject);background:var(--reject-bg);border:1px solid color-mix(in srgb,var(--reject) 35%,var(--line));border-radius:9px;padding:9px 12px;display:flex;align-items:center;gap:8px;} .lf-err svg{width:15px;height:15px;flex:none;}
+  .lf-demo{font-size:12px;color:var(--fg-faint);background:var(--surface-2);border:1px dashed var(--line);border-radius:9px;padding:9px 12px;} .lf-demo b{color:var(--fg-dim);font-family:var(--font-mono);}
+
+  /* ===================== APP SHELL ===================== */
+  #app{display:none;min-height:100%;} #app.on{display:block;}
+  .layout{display:grid;grid-template-columns:250px 1fr;min-height:100vh;}
+  .sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--sidebar);color:var(--sidebar-fg);display:flex;flex-direction:column;border-right:1px solid var(--sidebar-line);z-index:40;}
+  .sb-brand{display:flex;align-items:center;gap:11px;padding:18px 18px 16px;}
+  .sb-brand .brand-mark{width:34px;height:34px;border-radius:9px;}
+  .sb-brand .name{font-family:var(--font-display);font-weight:700;font-size:14.5px;color:#fff;line-height:1.1;}
+  .sb-brand .by{font-size:10px;color:var(--sidebar-faint);letter-spacing:.02em;}
+  .sb-nav{flex:1;padding:6px 12px;display:flex;flex-direction:column;gap:2px;}
+  .sb-sec{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#56688a;padding:14px 10px 6px;}
+  .sb-item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;color:var(--sidebar-dim);font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left;transition:background .13s,color .13s;position:relative;}
+  .sb-item svg{width:18px;height:18px;flex:none;}
+  .sb-item:hover{background:var(--sidebar-2);color:#dfe8f5;}
+  .sb-item.active{background:linear-gradient(90deg,rgba(47,107,255,.22),rgba(47,107,255,.08));color:#fff;}
+  .sb-item.active::before{content:"";position:absolute;left:-12px;top:7px;bottom:7px;width:3px;border-radius:0 3px 3px 0;background:var(--accent);}
+  .sb-item .pill{margin-left:auto;background:var(--reject);color:#fff;font-size:10px;font-family:var(--font-mono);border-radius:9px;padding:1px 7px;}
+  .sb-foot{padding:12px;border-top:1px solid var(--sidebar-line);}
+  .sb-user{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;}
+  .sb-user .av{width:34px;height:34px;border-radius:9px;background:linear-gradient(145deg,var(--accent),#5b86ff);display:grid;place-items:center;color:#fff;font-family:var(--font-display);font-weight:700;font-size:13px;}
+  .sb-user .un{font-size:12.5px;font-weight:600;color:#fff;} .sb-user .ur{font-size:10.5px;color:var(--sidebar-faint);}
+  .sb-user .out{margin-left:auto;color:var(--sidebar-dim);width:30px;height:30px;border-radius:8px;display:grid;place-items:center;border:none;background:none;} .sb-user .out:hover{background:var(--sidebar-2);color:#fff;} .sb-user .out svg{width:16px;height:16px;}
+
+  .main{min-width:0;display:flex;flex-direction:column;}
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;padding:13px clamp(16px,2.5vw,30px);background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+  .hamb{display:none;width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--fg-dim);place-items:center;} .hamb svg{width:18px;height:18px;}
+  .tb-title h1{font-size:18px;font-weight:600;line-height:1.15;} .tb-title .crumb{font-size:11.5px;color:var(--fg-faint);font-family:var(--font-mono);letter-spacing:.04em;}
+  .tb-spacer{flex:1;}
+  .tb-search{display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;width:230px;max-width:30vw;}
+  .tb-search svg{width:15px;height:15px;color:var(--fg-faint);flex:none;} .tb-search input{border:none;background:none;outline:none;flex:1;color:var(--fg);font-size:13px;min-width:0;}
+  .ic-btn{position:relative;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg-dim);display:grid;place-items:center;}
+  .ic-btn:hover{color:var(--fg);border-color:var(--accent);} .ic-btn svg{width:18px;height:18px;}
+  .bell-badge{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--reject);color:#fff;font-size:10px;font-family:var(--font-mono);display:grid;place-items:center;border:2px solid var(--surface);}
+  #bellWrap{position:relative;}
+  .bell-panel{position:absolute;right:0;top:46px;width:320px;max-width:86vw;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);overflow:hidden;z-index:45;}
+  .bell-head{padding:13px 15px;border-bottom:1px solid var(--line-soft);font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center;}
+  .bell-list{max-height:360px;overflow-y:auto;}
+  .bell-item{display:flex;gap:11px;padding:13px 15px;border-bottom:1px solid var(--line-soft);} .bell-item:last-child{border-bottom:none;} .bell-item.unread{background:var(--accent-bg);}
+  .bell-item .bi{width:33px;height:33px;border-radius:9px;background:var(--done-bg);color:var(--done);display:grid;place-items:center;flex:none;} .bell-item .bi svg{width:16px;height:16px;}
+  .bell-item .bt{font-size:12.5px;font-weight:600;} .bell-item .bd{font-size:11.5px;color:var(--fg-dim);margin-top:2px;} .bell-item .btime{font-size:10.5px;color:var(--fg-faint);margin-top:4px;font-family:var(--font-mono);}
+  .bell-empty{padding:30px;text-align:center;color:var(--fg-faint);font-size:12.5px;}
+
+  .content{padding:clamp(18px,2.5vw,30px) clamp(16px,2.5vw,30px) 70px;}
+  .page-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px;}
+  .page-intro .pt{font-size:15px;color:var(--fg-dim);}
+  .overline{font-family:var(--font-mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg-faint);margin-bottom:10px;}
+
+  /* buttons */
+  .btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:9px 15px;border-radius:10px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:all .13s;box-shadow:var(--shadow-sm);}
+  .btn svg{width:15px;height:15px;} .btn:hover{border-color:var(--accent);}
+  .btn-accent{background:linear-gradient(145deg,var(--accent),#5b86ff);color:#fff;border:none;box-shadow:0 4px 14px rgba(47,107,255,.28);} .btn-accent:hover{filter:brightness(1.05);}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--fg-dim);box-shadow:none;} .btn-ghost:hover{background:var(--surface-2);color:var(--fg);}
+  .btn-sm{padding:7px 12px;font-size:12px;} .btn-block{width:100%;}
+  .btn-danger{color:var(--reject);border-color:color-mix(in srgb,var(--reject) 45%,var(--line));background:var(--reject-bg);box-shadow:none;} .btn-danger:hover{border-color:var(--reject);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* cards & grid */
+  .grid{display:grid;gap:14px;}
+  .cols-4{grid-template-columns:repeat(4,1fr);} .cols-3{grid-template-columns:repeat(3,1fr);} .cols-2{grid-template-columns:repeat(2,1fr);}
+  .split{display:grid;gap:14px;grid-template-columns:1.6fr 1fr;}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
+  .card-pad{padding:16px 18px;}
+  .card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 18px;border-bottom:1px solid var(--line-soft);}
+  .card-head h3{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;} .card-head h3 .hi{color:var(--accent);display:grid;place-items:center;} .card-head h3 .hi svg{width:16px;height:16px;}
+  .card-head .meta{font-size:11.5px;color:var(--fg-faint);font-family:var(--font-mono);}
+
+  /* KPI stat tile */
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;}
+  .stat .sl{font-size:12px;color:var(--fg-dim);display:flex;align-items:center;gap:7px;}
+  .stat .sl .si{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;} .stat .sl .si svg{width:15px;height:15px;}
+  .stat .sv{font-family:var(--font-display);font-size:27px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:10px;line-height:1;}
+  .stat .sv .u{font-size:15px;color:var(--fg-faint);font-weight:600;}
+  .stat .sf{font-size:11.5px;color:var(--fg-faint);margin-top:5px;display:flex;align-items:center;gap:5px;}
+  .delta{font-family:var(--font-mono);font-weight:600;font-size:11px;padding:1px 6px;border-radius:5px;}
+  .delta.up{color:var(--done);background:var(--done-bg);} .delta.down{color:var(--reject);background:var(--reject-bg);}
+  .stat .spark{position:absolute;right:0;bottom:0;left:0;height:34px;opacity:.9;pointer-events:none;}
+  .stat.pad-spark{padding-bottom:30px;}
+
+  /* machine utilisation strip */
+  .util-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+  .util{background:var(--surface-2);border:1px solid var(--line-soft);border-radius:12px;padding:13px 14px;}
+  .util .uh{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .util .umid{font-family:var(--font-mono);font-weight:700;font-size:13px;}
+  .util .ut{font-size:11px;color:var(--fg-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .util .ubar{height:7px;background:var(--surface-3);border-radius:20px;overflow:hidden;margin-top:11px;}
+  .util .ubar>i{display:block;height:100%;border-radius:20px;transition:width .6s cubic-bezier(.2,.8,.2,1);}
+  .util .uv{font-family:var(--font-mono);font-size:11px;color:var(--fg-dim);margin-top:6px;display:flex;justify-content:space-between;}
+
+  /* status pill */
+  .pill{font-size:11px;font-weight:600;font-family:var(--font-mono);padding:4px 10px;border-radius:20px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
+  .pill .d{width:6px;height:6px;border-radius:50%;}
+  .s-idle{color:var(--fg-dim);background:var(--surface-3);} .s-idle .d{background:var(--fg-faint);}
+  .s-run{color:var(--run);background:var(--run-bg);} .s-run .d{background:var(--run);animation:pulse 2s infinite;}
+  .s-done{color:var(--done);background:var(--done-bg);} .s-done .d{background:var(--done);}
+  .s-ready{color:var(--ready);background:var(--ready-bg);} .s-ready .d{background:var(--ready);}
+  .timepill{font-family:var(--font-mono);font-weight:600;font-size:11px;color:var(--violet);background:var(--violet-bg);border-radius:6px;padding:3px 7px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;} .timepill svg{width:11px;height:11px;}
+
+  /* order rows */
+  .ord-head,.ord{display:grid;grid-template-columns:62px 1fr 150px 150px 116px;align-items:center;gap:16px;padding:12px 18px;}
+  .ord-head{border-bottom:1px solid var(--line-soft);} .ord-head span{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-faint);} .ord-head span.r{text-align:right;}
+  .ord{border-bottom:1px solid var(--line-soft);} .ord:last-child{border-bottom:none;} .ord:hover{background:var(--surface-2);}
+  .code-chip{font-family:var(--font-mono);font-weight:700;font-size:12.5px;padding:6px 0;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);text-align:center;letter-spacing:.02em;}
+  .ord-prod{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ord-party{font-size:12px;color:var(--accent);margin-top:2px;display:inline-flex;align-items:center;gap:5px;} .ord-party svg{width:12px;height:12px;}
+  .ord-sub{font-size:11.5px;color:var(--fg-dim);} .ord-sub.mono{font-family:var(--font-mono);font-weight:600;}
+  .prog{height:7px;background:var(--surface-3);border:1px solid var(--line-soft);border-radius:20px;overflow:hidden;} .prog>i{display:block;height:100%;border-radius:20px;background:var(--accent);transition:width .5s;} .prog.full>i{background:var(--done);}
+  .prog-top{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:6px;align-items:center;gap:6px;} .prog-top .mut{color:var(--fg-faint);}
+  .rej-chip{font-size:11px;font-family:var(--font-mono);color:var(--reject);background:var(--reject-bg);padding:2px 7px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;} .rej-chip svg{width:11px;height:11px;}
+
+  /* tables */
+  .tbl-wrap{overflow-x:auto;} table.data{width:100%;border-collapse:collapse;font-size:13px;min-width:580px;}
+  table.data th{text-align:left;font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-faint);font-weight:500;padding:12px 16px;border-bottom:1px solid var(--line-soft);}
+  table.data th.r,table.data td.r{text-align:right;}
+  table.data td{padding:13px 16px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+  table.data tr:last-child td{border-bottom:none;} table.data tbody tr:hover td{background:var(--surface-2);}
+  .hidden-tag{font-size:10px;font-family:var(--font-mono);color:var(--fg-faint);border:1px dashed var(--line);border-radius:5px;padding:2px 6px;white-space:nowrap;}
+  .av2{width:32px;height:32px;border-radius:9px;background:var(--surface-2);border:1px solid var(--line);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:12px;color:var(--fg-dim);flex:none;}
+  .matchip{font-size:10.5px;font-family:var(--font-mono);color:var(--fg-dim);background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:2px 6px;}
+  .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+  .count-note{font-size:12px;color:var(--fg-faint);} .count-note b{color:var(--fg-dim);font-family:var(--font-mono);}
+
+  /* machine cards */
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:14px;}
+  .mcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);}
+  .mcard .mh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px;}
+  .mcard .mid{font-family:var(--font-mono);font-weight:700;font-size:16px;letter-spacing:.02em;}
+  .mcard .mn{font-weight:600;font-size:13.5px;} .mcard .mt2{font-size:12px;color:var(--fg-dim);margin-top:1px;}
+  .mcard .mrun{margin-top:12px;font-size:12px;color:var(--fg-dim);display:flex;align-items:center;gap:7px;} .mcard .mrun svg{width:15px;height:15px;flex:none;color:var(--fg-faint);} .mcard .mrun .timepill svg{width:11px;height:11px;color:var(--violet);}
+  .mcard .ubar{height:7px;background:var(--surface-3);border-radius:20px;overflow:hidden;margin-top:13px;} .mcard .ubar>i{display:block;height:100%;border-radius:20px;}
+  .mcard .uv{font-family:var(--font-mono);font-size:11px;color:var(--fg-dim);margin-top:6px;display:flex;justify-content:space-between;}
+  .mcard.slot{border-style:dashed;background:var(--surface-2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:150px;color:var(--fg-faint);text-align:center;} .mcard.slot svg{width:22px;height:22px;}
+
+  /* report helpers */
+  .metricrow{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:13px;gap:10px;} .metricrow:last-child{border-bottom:none;} .metricrow .mv{font-family:var(--font-mono);font-weight:600;} .metricrow .ml{color:var(--fg-dim);}
+  .seg2{display:inline-flex;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:4px;}
+  .seg2 button{border:none;background:none;padding:7px 13px;border-radius:7px;font-size:12.5px;font-weight:600;color:var(--fg-dim);} .seg2 button.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow-sm);}
+  .snap{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:12.5px;} .snap:last-child{border-bottom:none;}
+  .snap .si{width:32px;height:32px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--fg-dim);flex:none;} .snap .si svg{width:15px;height:15px;}
+  .snap .sg{flex:1;min-width:0;} .snap .sm{font-family:var(--font-mono);color:var(--fg-faint);font-size:11px;}
+  .info-band{display:flex;align-items:flex-start;gap:10px;background:var(--accent-bg);border:1px solid color-mix(in srgb,var(--accent) 28%,var(--line));border-radius:11px;padding:12px 14px;font-size:12.5px;color:var(--fg-dim);} .info-band svg{width:16px;height:16px;color:var(--accent);flex:none;margin-top:1px;} .info-band b{color:var(--fg);}
+  .hbar{display:flex;align-items:center;gap:10px;padding:8px 0;} .hbar .hl{width:120px;font-size:12px;color:var(--fg-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none;}
+  .hbar .ht{flex:1;height:9px;background:var(--surface-3);border-radius:20px;overflow:hidden;} .hbar .ht>i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent),#5b86ff);}
+  .hbar .hv{font-family:var(--font-mono);font-size:12px;font-weight:600;width:64px;text-align:right;flex:none;}
+  .ring-wrap{display:flex;align-items:center;gap:14px;} .ring-wrap .rc{position:relative;flex:none;} .ring-wrap .rc .rn{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:15px;}
+
+  /* rework */
+  .rework-card{padding:16px 18px;border-bottom:1px solid var(--line-soft);} .rework-card:last-child{border-bottom:none;}
+  .rework-top{display:flex;align-items:center;gap:12px;margin-bottom:11px;flex-wrap:wrap;}
+  .rework-line{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;padding:3px 0;} .rework-line .sn{font-family:var(--font-mono);font-weight:600;color:var(--reject);background:var(--reject-bg);border-radius:6px;padding:2px 8px;flex:none;white-space:nowrap;} .rework-line .rr{color:var(--fg-dim);} .rework-line .rr b{color:var(--fg);}
+
+  /* ===================== WORKER ===================== */
+  .wshell{max-width:480px;margin:0 auto;padding:16px clamp(14px,4vw,20px) 60px;}
+  .wtop{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .wtop .brand-mark{width:34px;height:34px;border-radius:9px;}
+  .wtop .wn{font-family:var(--font-display);font-weight:700;font-size:14px;} .wtop .wr2{font-size:10.5px;color:var(--fg-faint);}
+  .whero{background:linear-gradient(145deg,#0d1626,#1c2d49);color:#eaf0f8;border-radius:18px;padding:18px 20px;display:flex;align-items:center;gap:14px;margin-bottom:16px;box-shadow:var(--shadow);}
+  .whero .wav{width:48px;height:48px;border-radius:13px;background:rgba(255,255,255,.1);display:grid;place-items:center;font-family:var(--font-display);font-weight:700;font-size:17px;color:#fff;}
+  .whero .hi{font-family:var(--font-display);font-weight:700;font-size:18px;} .whero .mt{font-size:12.5px;color:#9fb0c9;margin-top:2px;}
+  .whero .cnt{margin-left:auto;text-align:right;} .whero .cnt b{font-family:var(--font-display);font-size:26px;display:block;line-height:1;} .whero .cnt span{font-size:10.5px;color:#9fb0c9;}
+  .demo-switch{margin-bottom:16px;} .seg{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:4px;overflow-x:auto;scrollbar-width:none;} .seg::-webkit-scrollbar{display:none;}
+  .seg button{border:none;background:transparent;color:var(--fg-dim);padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:600;white-space:nowrap;} .seg button.on{background:var(--accent-bg);color:var(--accent);}
+  .jobcard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow);}
+  .jobcard.is-reject{border-color:color-mix(in srgb,var(--reject) 40%,var(--line));}
+  .jc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;}
+  .jc-code{font-family:var(--font-mono);font-size:27px;font-weight:700;letter-spacing:.03em;line-height:1;} .jc-part{color:var(--fg-dim);font-size:13px;margin-top:6px;}
+  .setups-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+  .setups{display:flex;gap:7px;}
+  .setup-dot{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-family:var(--font-mono);font-weight:700;font-size:13px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg-faint);}
+  .setup-dot svg{width:15px;height:15px;} .setup-dot.done{background:var(--done-bg);color:var(--done);border-color:transparent;} .setup-dot.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 12px rgba(47,107,255,.3);} .setup-dot.future{border-style:dashed;opacity:.6;}
+  .setups-label{font-size:12.5px;color:var(--fg-dim);font-weight:600;}
+  .est-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--violet-bg);border:1px solid color-mix(in srgb,var(--violet) 25%,var(--line));border-radius:12px;padding:12px 14px;margin-bottom:14px;}
+  .est-row .el{font-size:12px;color:var(--fg-dim);} .est-row .el b{color:var(--fg);} .est-row .es{font-size:11px;color:var(--fg-faint);margin-top:2px;}
+  .tap-time{font-family:var(--font-mono);font-weight:700;font-size:17px;color:#fff;background:var(--violet);border:none;border-radius:10px;padding:8px 13px;display:inline-flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(106,92,255,.3);} .tap-time svg{width:14px;height:14px;}
+  .jc-big{text-align:center;padding:4px 0 2px;}
+  .jc-big .num{font-family:var(--font-display);font-size:46px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;} .jc-big .num .of{color:var(--fg-faint);font-size:24px;}
+  .jc-big .lbl{font-size:12px;color:var(--fg-dim);margin-top:6px;}
+  .jc-bar{height:11px;background:var(--surface-3);border:1px solid var(--line-soft);border-radius:20px;overflow:hidden;margin-top:14px;} .jc-bar>i{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,var(--accent),#5b86ff);transition:width .5s;} .jc-bar.full>i{background:var(--done);}
+  .stepper{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin:16px 0 4px;height:58px;}
+  .stepper button{border:none;background:var(--surface-2);color:var(--fg);width:70px;font-size:26px;font-weight:600;transition:background .12s;} .stepper button:hover{background:var(--accent);color:#fff;}
+  .stepper .val{flex:1;text-align:center;align-self:center;} .stepper .val b{font-family:var(--font-mono);font-weight:700;font-size:26px;} .stepper .val span{display:block;font-size:10px;color:var(--fg-faint);font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;}
+  .reject-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 2px;font-size:12.5px;color:var(--fg-dim);} .reject-row b{color:var(--reject);font-family:var(--font-mono);}
+  .setup-actions{display:grid;gap:9px;margin-top:16px;} .setup-actions.two{grid-template-columns:1fr 1fr;}
+  .reject-note{font-size:12.5px;color:var(--reject);background:var(--reject-bg);border-radius:11px;padding:11px 13px;margin-bottom:14px;display:flex;gap:9px;align-items:flex-start;} .reject-note svg{width:16px;height:16px;flex:none;margin-top:1px;} .reject-note .why{color:var(--fg-dim);font-style:italic;}
+  .done-banner{text-align:center;color:var(--done);font-size:13.5px;font-weight:600;padding:16px;background:var(--done-bg);border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:7px;} .done-banner svg{width:22px;height:22px;} .done-banner small{font-weight:500;color:var(--fg-dim);font-size:12px;}
+
+  /* modal / toast */
+  .scrim{position:fixed;inset:0;background:rgba(10,15,26,.5);backdrop-filter:blur(4px);z-index:70;display:grid;place-items:center;padding:18px;overflow-y:auto;}
+  .modal{width:100%;max-width:460px;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow-lg);overflow:hidden;margin:auto;}
+  .modal-head{padding:18px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:12px;}
+  .modal-head .mi{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;background:var(--accent-bg);color:var(--accent);flex:none;} .modal-head .mi.danger{background:var(--reject-bg);color:var(--reject);} .modal-head .mi.violet{background:var(--violet-bg);color:var(--violet);} .modal-head .mi svg{width:20px;height:20px;}
+  .modal-head h3{font-size:15px;} .modal-head p{margin:2px 0 0;font-size:12px;color:var(--fg-dim);}
+  .modal-body{padding:18px;display:flex;flex-direction:column;gap:15px;}
+  .field label{display:block;font-size:11px;font-family:var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-dim);margin-bottom:6px;}
+  .field input,.field select,.field textarea{width:100%;padding:11px 13px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);font-size:14px;} .field textarea{resize:vertical;min-height:64px;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent);}
+  .field .hint{font-size:11.5px;color:var(--fg-faint);margin-top:6px;}
+  .row{display:flex;gap:12px;} .row>*{flex:1;}
+  .modal-foot{padding:15px 18px;border-top:1px solid var(--line-soft);display:flex;gap:10px;justify-content:flex-end;}
+  .send-to{display:flex;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;}
+  .msg-preview{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:13px;font-size:13px;line-height:1.55;} .msg-preview .wa{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--done);font-family:var(--font-mono);margin-bottom:8px;} .msg-preview .wa svg{width:14px;height:14px;}
+  .mini-step{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:11px;overflow:hidden;width:150px;height:46px;} .mini-step button{border:none;background:var(--surface-2);color:var(--fg);width:46px;font-size:20px;font-weight:600;} .mini-step button:hover{background:var(--reject);color:#fff;} .mini-step .v{flex:1;text-align:center;align-self:center;font-family:var(--font-mono);font-weight:700;font-size:18px;}
+  .time-input{display:flex;align-items:center;gap:8px;} .time-input .ti{flex:1;} .time-input .ti .mini-step{width:100%;} .time-input .ti button:hover{background:var(--violet);} .time-input .sep{font-family:var(--font-mono);font-weight:700;font-size:16px;color:var(--fg-faint);}
+  #toasts{position:fixed;right:18px;bottom:18px;z-index:90;display:flex;flex-direction:column;gap:9px;max-width:330px;}
+  .toast{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--done);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-lg);display:flex;gap:10px;align-items:flex-start;animation:slidein .3s cubic-bezier(.2,.8,.2,1);}
+  .toast.rej{border-left-color:var(--reject);} .toast.rej svg{color:var(--reject);} .toast svg{width:17px;height:17px;color:var(--done);flex:none;margin-top:1px;} .toast .tt{font-weight:600;font-size:13px;} .toast .td{font-size:12px;color:var(--fg-dim);margin-top:1px;}
+  @keyframes slidein{from{transform:translateX(16px);opacity:0;}}
+  .empty{text-align:center;padding:44px 20px;color:var(--fg-faint);font-size:13px;}
+  .scrim-nav{display:none;}
+
+  /* ===================== RESPONSIVE ===================== */
+  @media (max-width:1100px){ .cols-4{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:980px){
+    .layout{grid-template-columns:1fr;}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:264px;transform:translateX(-100%);transition:transform .25s cubic-bezier(.2,.8,.2,1);box-shadow:var(--shadow-lg);}
+    .layout.nav-open .sidebar{transform:none;}
+    .layout.nav-open .scrim-nav{display:block;position:fixed;inset:0;background:rgba(10,15,26,.5);z-index:35;}
+    .hamb{display:grid;}
+    .cols-3{grid-template-columns:1fr 1fr;} .cols-2{grid-template-columns:1fr;} .split{grid-template-columns:1fr;}
+  }
+  @media (max-width:860px){
+    #login{grid-template-columns:1fr;} #stage-wrap{display:none;}
+    .ord-head{display:none;}
+    .ord{grid-template-columns:52px 1fr auto;gap:12px;}
+    .ord .prog-cell,.ord .act-cell{grid-column:2 / -1;} .ord .mc-cell{display:none;}
+  }
+  @media (max-width:640px){
+    .cols-4,.cols-3{grid-template-columns:1fr 1fr;}
+    .tb-search{display:none;} .tb-title h1{font-size:16px;}
+    .content{padding-left:14px;padding-right:14px;}
+  }
+  @media (max-width:420px){ .cols-4,.cols-3{grid-template-columns:1fr;} }
+  @media (prefers-reduced-motion:reduce){ *{animation:none !important;transition:none !important;} }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+
+
+<div id="app"><div id="view"></div></div>
+<div id="toasts"></div>
+
+<script>
+/* ============================================================ DATA ============================================================ */
+const MAX_SETUPS=5, MAX_MACHINES=10, TOTAL_PRODUCTS=214;
+const PARTIES=[
+  {code:"P-07",name:"Shah Metal Works",phone:"+91 98250 11223"},
+  {code:"P-11",name:"Rajkot Auto Components",phone:"+91 94260 55870"},
+  {code:"P-14",name:"Gokul Hydraulics",phone:"+91 99090 33411"},
+  {code:"P-19",name:"Bhavnagar Fasteners",phone:"+91 97250 77654"},
+];
+let WORKERS=[
+  {id:"raju01",name:"Raju Parmar",machine:"M-1",initials:"RP",pin:"1111"},
+  {id:"suresh02",name:"Suresh Vala",machine:"M-2",initials:"SV",pin:"2222"},
+  {id:"amit03",name:"Amit Chauhan",machine:"M-3",initials:"AC",pin:"3333"},
+  {id:"kiran04",name:"Kiran Dodiya",machine:"M-4",initials:"KD",pin:"4444"},
+];
+let MACHINES=[
+  {id:"M-1",name:"CNC Lathe — Okuma",type:"CNC Turning",worker:"raju01",active:true},
+  {id:"M-2",name:"VMC — Haas VF-2",type:"VMC Milling",worker:"suresh02",active:true},
+  {id:"M-3",name:"CNC Lathe — DMG",type:"CNC Turning",worker:"amit03",active:true},
+  {id:"M-4",name:"Drill & Tap Center",type:"Drilling / Tapping",worker:"kiran04",active:true},
+  {id:"M-5",name:"Cylindrical Grinder",type:"Grinding",worker:null,active:true},
+];
+const UTIL={"M-1":86,"M-2":92,"M-3":64,"M-4":38,"M-5":0};
+let PRODUCTS=[
+  {code:"FLG-204",name:"Flange FLG-204",mat:"SS304",rate:85,est:{"M-1":90,"M-2":45,"M-5":60}},
+  {code:"BSH-88",name:"Bush BSH-88",mat:"EN8",rate:32,est:{"M-1":40,"M-3":35}},
+  {code:"SPC-12",name:"Spacer SPC-12",mat:"MS",rate:18,est:{"M-2":25}},
+  {code:"CPL-30",name:"Coupling CPL-30",mat:"SS316",rate:120,est:{"M-1":110,"M-2":70,"M-4":30}},
+  {code:"SHF-55",name:"Shaft SHF-55",mat:"EN19",rate:150,est:{"M-1":130,"M-5":90}},
+  {code:"WSR-06",name:"Washer WSR-06",mat:"MS",rate:6,est:{"M-2":15}},
+  {code:"NUT-10",name:"Hex Nut NUT-10",mat:"MS",rate:4,est:{"M-4":12}},
+  {code:"PIN-22",name:"Dowel Pin PIN-22",mat:"EN8",rate:9,est:{"M-1":22,"M-5":30}},
+  {code:"GER-40",name:"Spur Gear GER-40",mat:"EN24",rate:240,est:{"M-2":180,"M-3":120}},
+  {code:"BRG-15",name:"Bearing Cap BRG-15",mat:"CI",rate:65,est:{"M-2":55,"M-4":25}},
+  {code:"VLV-70",name:"Valve Body VLV-70",mat:"SS304",rate:310,est:{"M-2":210,"M-1":90}},
+  {code:"ADP-33",name:"Adapter ADP-33",mat:"Brass",rate:48,est:{"M-1":50}},
+  {code:"CLM-09",name:"Clamp CLM-09",mat:"MS",rate:22,est:{"M-4":30,"M-2":20}},
+  {code:"ROL-61",name:"Guide Roller ROL-61",mat:"EN8",rate:95,est:{"M-3":80,"M-5":60}},
+];
+let JOBS=[
+  {id:1,product:"FLG-204",pcode:"P-07",qty:100,worker:"raju01",status:"run",cur:2,finalAt:null,
+   setups:[{machine:"M-1",made:100,rejected:4,reason:"Burr on OD face",estSec:90},{machine:"M-2",made:62,rejected:2,reason:"Bore undersize",estSec:45}]},
+  {id:2,product:"BSH-88",pcode:"P-11",qty:60,worker:"suresh02",status:"done",cur:2,finalAt:2,
+   setups:[{machine:"M-1",made:60,rejected:0,reason:"",estSec:40},{machine:"M-3",made:60,rejected:0,reason:"",estSec:35}]},
+  {id:3,product:"SPC-12",pcode:"P-14",qty:150,worker:"amit03",status:"run",cur:1,finalAt:null,
+   setups:[{machine:"M-2",made:40,rejected:2,reason:"Wrong thickness",estSec:25}]},
+  {id:4,product:"CPL-30",pcode:"P-19",qty:80,worker:"kiran04",status:"idle",cur:1,finalAt:null,
+   setups:[{machine:"M-4",made:0,rejected:0,reason:"",estSec:30}]},
+  {id:5,product:"WSR-06",pcode:"P-14",qty:500,worker:"suresh02",status:"run",cur:1,finalAt:null,
+   setups:[{machine:"M-2",made:320,rejected:8,reason:"OD out of tolerance",estSec:15}]},
+];
+let BILLS=[
+  {pcode:"P-07",product:"SHF-55",qty:45,rate:150,date:"02 Nov 2026"},
+  {pcode:"P-14",product:"WSR-06",qty:480,rate:6,date:"05 Nov 2026"},
+  {pcode:"P-19",product:"GER-40",qty:30,rate:240,date:"10 Nov 2026"},
+  {pcode:"P-11",product:"BSH-88",qty:60,rate:32,date:"20 Nov 2026"},
+];
+let PAYMENTS=[{pcode:"P-14",amount:2500,date:"08 Nov 2026",ref:"UPI 660482"},{pcode:"P-07",amount:5000,date:"14 Nov 2026",ref:"NEFT 2231"}];
+let NOTIFS=[{id:901,worker:"suresh02",pcode:"P-11",product:"BSH-88",setup:2,made:60,time:"Today 11:42",read:false}];
+const TREND=[62,88,74,96,110,84,132];
+
+/* helpers */
+const partyOf=c=>PARTIES.find(p=>p.code===c)||{name:"—",phone:""};
+const workerOf=id=>WORKERS.find(w=>w.id===id)||{name:"—",initials:"?",machine:"—"};
+const productOf=c=>PRODUCTS.find(p=>p.code===c)||{code:c,name:c,mat:"",rate:0,est:{}};
+const machineOf=id=>MACHINES.find(m=>m.id===id)||{id:id,name:"—"};
+const curSetup=j=>j.setups[j.cur-1];
+const totalRej=j=>j.setups.reduce((s,x)=>s+x.rejected,0);
+const STATUS={idle:{cls:"s-idle",label:"Not started"},run:{cls:"s-run",label:"In progress"},done:{cls:"s-done",label:"Work done"},closed:{cls:"s-done",label:"Party told"}};
+const pad2=n=>String(n).padStart(2,"0");
+const fmtMS=sec=>pad2(Math.floor((sec||0)/60))+":"+pad2((sec||0)%60);
+function estDur(sec,qty){const t=(sec||0)*qty;const h=Math.floor(t/3600),m=Math.round((t%3600)/60);return h?`${h}h ${m}m`:`${m}m`;}
+const inr=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+function acct(){const m={};PARTIES.forEach(p=>m[p.code]={billed:0,received:0,orders:0});BILLS.forEach(b=>{m[b.pcode].billed+=b.qty*b.rate;m[b.pcode].orders++;});PAYMENTS.forEach(p=>{if(m[p.pcode])m[p.pcode].received+=p.amount;});return m;}
+
+/* charts */
+function spark(vals,w,h,color){
+  const mx=Math.max(...vals),mn=Math.min(...vals),dx=w/(vals.length-1);
+  const pts=vals.map((v,i)=>[i*dx,h-((v-mn)/((mx-mn)||1))*(h-4)-2]);
+  const line=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" width="100%" height="${h}" style="display:block"><path d="${line} L${w} ${h} L0 ${h} Z" fill="${color}" opacity=".10"/><path d="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function ring(pct,color,size){const r=size/2-5,c=2*Math.PI*r;return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--surface-3)" stroke-width="5"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${(c*(1-pct/100)).toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/></svg>`;}
+
+/* ============================================================ ICONS ============================================================ */
+const ic={
+  dash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="3" y="16" width="8" height="5" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/></svg>',
+  orders:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="11" width="18" height="4" rx="1"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg>',
+  redo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6M21 12a9 9 0 1 1-3-7l3 3"/></svg>',
+  cpu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
+  box:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8V7l-9-4-9 4v10l9 4 9-4V8z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>',
+  eye:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+  users:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>',
+  rupee:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12M6 8h12M9 3c4 0 6 2 6 5s-2 5-6 5H6l7 8"/></svg>',
+  chart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 3 4-6"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+  send:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  bolt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h8l-1 8 10-12h-8z"/></svg>',
+  wallet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 13h2M3 10h18"/></svg>',
+};
+const NAV=[
+  ["OVERVIEW",[["dashboard","Dashboard","dash"]]],
+  ["PRODUCTION",[["orders","Orders","orders"],["rework","Rework","redo"],["machines","Machines","cpu"]]],
+  ["CATALOGUE",[["products","Products","box"]]],
+  ["PEOPLE",[["parties","Parties","eye"],["workers","Workers","users"]]],
+  ["FINANCE",[["accounting","Accounting","rupee"],["reports","Reports","chart"]]],
+];
+const TITLES={dashboard:["Dashboard","Live floor overview"],orders:["Orders","Live production board"],rework:["Rework","Rejections & rework"],machines:["Machines","Up to 10 machines"],products:["Products","Catalogue & cycle times"],parties:["Parties","Confidential code mapping"],workers:["Workers","Operators & logins"],accounting:["Accounting","Billing & receivables"],reports:["Reports","Month-end & backup"]};
+
+/* ============================================================ ROUTING / SHELL ============================================================ */
+let session={role:null,workerId:null}, adminTab="dashboard", prodQuery="", loginRole=null;
+const ADMIN_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="8" height="10" rx="1.5"/><rect x="3" y="16" width="8" height="5" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/></svg>';
+const WORKER_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="3"/><path d="M11 18h2"/></svg>';
+function openApp(role,workerId){
+  session.role=role; session.workerId=workerId||(role==="worker"?"raju01":null);
+  document.getElementById("app").classList.add("on");
+  adminTab="dashboard"; render();
+}
+function logout(){
+  /* prototype: no login — flip between owner console and worker app */
+  if(session.role==="worker"){openApp("admin");toast("Owner console","Switched to admin view");}
+  else{openApp("worker","raju01");toast("Worker app","Previewing operator view");}
+}
+function go(tab){adminTab=tab;render();}
+function toggleNav(){document.getElementById("layout")?.classList.toggle("nav-open");}
+
+function render(){
+  const v=document.getElementById("view");
+  if(session.role==="worker"){ v.innerHTML=workerView(); window.scrollTo({top:0}); return; }
+  const rej=JOBS.reduce((s,j)=>s+totalRej(j),0);
+  const nav=NAV.map(([sec,items])=>`<div class="sb-sec">${sec}</div>`+items.map(([id,label,icon])=>
+    `<button class="sb-item ${adminTab===id?'active':''}" onclick="go('${id}')">${ic[icon]}<span>${label}</span>${id==='rework'&&rej?`<span class="pill">${rej}</span>`:''}</button>`).join("")).join("");
+  const [title,crumb]=TITLES[adminTab]||["",""];
+  const search=(adminTab==="products"||adminTab==="orders")?`<div class="tb-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input placeholder="Search ${adminTab}…" value="${prodQuery.replace(/"/g,'&quot;')}" oninput="prodQuery=this.value;renderContent();setTimeout(()=>{var e=document.querySelector('.tb-search input');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}})"></div>`:"";
+  v.innerHTML=`<div class="layout" id="layout">
+    <aside class="sidebar">
+      <div class="sb-brand"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></div>
+        <div><div class="name">Alive Engineering</div><div class="by">Production Control</div></div></div>
+      <nav class="sb-nav">${nav}</nav>
+      <div class="sb-foot"><div class="sb-user"><div class="av">A</div><div><div class="un">Alive Admin</div><div class="ur">Owner</div></div><button class="out" onclick="logout()" title="Switch view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button></div></div>
+    </aside>
+    <div class="scrim-nav" onclick="toggleNav()"></div>
+    <div class="main">
+      <header class="topbar">
+        <button class="hamb" onclick="toggleNav()" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+        <div class="tb-title"><h1>${title}</h1><div class="crumb">${crumb}</div></div>
+        <span class="tb-spacer"></span>
+        ${search}
+        <div id="bellWrap"><button class="ic-btn" onclick="toggleBell(event)" aria-label="Alerts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="bell-badge" id="bellBadge" hidden>0</span></button><div class="bell-panel" id="bellPanel" hidden></div></div>
+        <button class="ic-btn" onclick="toggleTheme()" aria-label="Theme"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
+      </header>
+      <div class="content" id="content">${sectionHTML()}</div>
+    </div>
+  </div>`;
+  renderBell(); window.scrollTo({top:0});
+}
+function renderContent(){const c=document.getElementById("content");if(c)c.innerHTML=sectionHTML();}
+function sectionHTML(){return ({dashboard:dashboard,orders:ordersPage,rework:reworkPage,machines:machinesPage,products:productsPage,parties:partiesPage,workers:workersPage,accounting:accountingPage,reports:reportsPage}[adminTab]||dashboard)();}
+
+/* ============================================================ DASHBOARD ============================================================ */
+function dashboard(){
+  const running=JOBS.filter(j=>j.status==="run").length;
+  const weekUnits=TREND.reduce((a,b)=>a+b,0);
+  const estHrs=JOBS.reduce((s,j)=>s+curSetup(j).estSec*j.qty,0)/3600;
+  const made=JOBS.reduce((s,j)=>s+j.setups.reduce((a,x)=>a+x.made,0),0);
+  const rej=JOBS.reduce((s,j)=>s+totalRej(j),0);
+  const accPct=Math.round((made-rej)/made*100);
+  const m=acct(); const revenue=Object.values(m).reduce((s,x)=>s+x.billed,0);
+  const outstanding=revenue-Object.values(m).reduce((s,x)=>s+x.received,0);
+  const utilAvg=Math.round(Object.values(UTIL).reduce((a,b)=>a+b,0)/MACHINES.filter(x=>x.active).length);
+  const stat=(label,icon,ibg,ic2,val,unit,foot,sp,spc)=>`
+    <div class="stat ${sp?'pad-spark':''}"><div class="sl"><span class="si" style="background:${ibg};color:${ic2}">${ic[icon]}</span>${label}</div>
+      <div class="sv">${val}${unit?`<span class="u"> ${unit}</span>`:''}</div><div class="sf">${foot}</div>
+      ${sp?`<div class="spark">${spark(sp,120,34,spc)}</div>`:''}</div>`;
+  return `
+  <div class="grid cols-4" style="margin-bottom:14px">
+    ${stat("Running now","orders","var(--run-bg)","var(--run)",running,"jobs",`<span class="mono">${MACHINES.filter(x=>x.active).length}</span>&nbsp;machines active`)}
+    ${stat("Units this week","bolt","var(--violet-bg)","var(--violet)",weekUnits.toLocaleString("en-IN"),"",`<span class="delta up">▲ 14%</span> vs last week`,TREND,"var(--violet)")}
+    ${stat("Est. machine time","clock","var(--violet-bg)","var(--violet)",estHrs.toFixed(1),"h",`for running orders`)}
+    ${stat("Revenue (Nov)","rupee","var(--done-bg)","var(--done)",inr(revenue),"",`<span class="delta up">▲ ₹3.1k</span> this month`,[4,6,3,8,5,7,9],"var(--done)")}
+  </div>
+  <div class="split" style="margin-bottom:14px">
+    <div class="card">
+      <div class="card-head"><h3><span class="hi">${ic.chart}</span>Production — last 7 days</h3><span class="meta">units / day</span></div>
+      <div class="card-pad">${spark(TREND,640,120,"var(--accent)")}
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-family:var(--font-mono);font-size:10.5px;color:var(--fg-faint)"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Today</span></div></div>
+    </div>
+    <div class="card"><div class="card-head"><h3><span class="hi">${ic.check}</span>Quality & load</h3></div>
+      <div class="card-pad" style="display:flex;flex-direction:column;gap:16px">
+        <div class="ring-wrap"><div class="rc" style="width:66px;height:66px">${ring(accPct,"var(--done)",66)}<div class="rn">${accPct}%</div></div>
+          <div><div style="font-weight:600;font-size:13px">Acceptance rate</div><div style="font-size:12px;color:var(--fg-dim)">${made-rej} good of ${made} made · ${rej} reworked</div></div></div>
+        <div class="ring-wrap"><div class="rc" style="width:66px;height:66px">${ring(utilAvg,"var(--accent)",66)}<div class="rn">${utilAvg}%</div></div>
+          <div><div style="font-weight:600;font-size:13px">Machine utilisation</div><div style="font-size:12px;color:var(--fg-dim)">avg across ${MACHINES.filter(x=>x.active).length} active machines</div></div></div>
+      </div></div>
+  </div>
+  <div class="split">
+    <div class="card">
+      <div class="card-head"><h3><span class="hi">${ic.cpu}</span>Machine utilisation</h3><button class="btn btn-ghost btn-sm" onclick="go('machines')">View all</button></div>
+      <div class="card-pad"><div class="util-strip">
+        ${MACHINES.filter(x=>x.active).map(mc=>{const u=UTIL[mc.id]||0;const job=JOBS.find(j=>curSetup(j).machine===mc.id&&j.status==="run");const col=u>75?'var(--done)':u>40?'var(--accent)':u>0?'var(--ready)':'var(--fg-faint)';
+          return `<div class="util"><div class="uh"><span class="umid">${mc.id}</span><span class="pill ${job?'s-run':'s-idle'}"><span class="d"></span>${job?'Run':'Idle'}</span></div>
+            <div class="ut">${mc.type}</div><div class="ubar"><i style="width:${u}%;background:${col}"></i></div>
+            <div class="uv"><span>${job?productOf(job.product).name.split(" ")[0]:'—'}</span><span>${u}%</span></div></div>`;}).join("")}
+      </div></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3><span class="hi">${ic.check}</span>Recent completions</h3></div>
+      <div class="card-pad">
+        ${NOTIFS.length?[...NOTIFS].reverse().slice(0,4).map(n=>{const w=workerOf(n.worker);return `<div class="snap"><span class="si" style="color:var(--done);background:var(--done-bg)">${ic.check}</span><div class="sg"><div style="font-weight:600;font-size:12.5px">${w.name} finished ${n.pcode}</div><div class="sm">${productOf(n.product).name} · ${n.made} units · ${n.time}</div></div></div>`;}).join(""):`<div class="empty">No completions yet.</div>`}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px">
+          <button class="btn btn-accent btn-sm" onclick="openJobModal()">${ic.plus}New order</button>
+          <button class="btn btn-sm" onclick="go('reports')">${ic.chart}Reports</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================ ORDERS ============================================================ */
+function ordersPage(){
+  const q=prodQuery.trim().toLowerCase();
+  let list=JOBS; if(q) list=JOBS.filter(j=>j.pcode.toLowerCase().includes(q)||productOf(j.product).name.toLowerCase().includes(q)||j.product.toLowerCase().includes(q));
+  const running=JOBS.filter(j=>j.status==="run").length, completed=JOBS.filter(j=>j.status==="done"||j.status==="closed").length;
+  const ready=JOBS.filter(j=>j.status==="done").length, rej=JOBS.reduce((s,j)=>s+totalRej(j),0);
+  const miniStat=(l,v,c,s)=>`<div class="stat"><div class="sl"><span class="si" style="background:${c}20;color:${c}"><span style="width:8px;height:8px;border-radius:50%;background:${c}"></span></span>${l}</div><div class="sv">${v}</div><div class="sf">${s}</div></div>`;
+  return `
+  <div class="page-intro"><div class="pt">Everything on the floor — you see party names &amp; machine time; the floor sees codes.</div>
+    <button class="btn btn-accent" onclick="openJobModal()">${ic.plus}New order</button></div>
+  <div class="grid cols-4" style="margin-bottom:16px">
+    ${miniStat("Running",running,"#2f6bff","jobs on machines")}
+    ${miniStat("Completed",completed,"#0f9d58","work finished")}
+    ${miniStat("To redo",`<span style='color:var(--reject)'>${rej}</span>`,"#e23d3d","rejected units")}
+    ${miniStat("Ready",`<span style='color:var(--ready)'>${ready}</span>`,"#d98a00","tell the party")}
+  </div>
+  <div class="card"><div class="ord-head"><span>Code</span><span>Product &amp; party</span><span>Machine · time/pc</span><span>Progress</span><span class="r">Status</span></div>
+    ${list.length?list.map(ordRow).join(""):`<div class="empty">No orders match "${q}".</div>`}
+  </div>`;
+}
+function ordRow(j){
+  const p=partyOf(j.pcode),s=STATUS[j.status],prod=productOf(j.product),cs=curSetup(j);
+  const done=j.status==="done"||j.status==="closed",made=cs.made,pct=Math.round(made/j.qty*100),rej=totalRej(j);
+  const right=j.status==="done"?`<button class="btn btn-accent btn-sm" onclick="openNotify(${j.id})">${ic.send}Notify</button>`:`<span class="pill ${s.cls}"><span class="d"></span>${s.label}</span>`;
+  return `<div class="ord">
+    <div class="code-chip">${j.pcode}</div>
+    <div style="min-width:0"><div class="ord-prod">${prod.name}</div><div class="ord-party">${ic.eye}${p.name}</div></div>
+    <div class="mc-cell"><div class="ord-sub mono">${cs.machine} · ${done?`Setup ${j.finalAt}`:`Setup ${j.cur}/${MAX_SETUPS}`}</div><div style="margin-top:4px"><span class="timepill">${ic.clock}${fmtMS(cs.estSec)}/pc</span></div></div>
+    <div class="prog-cell"><div class="prog-top"><span class="mono">${made}<span class="mut">/${j.qty}</span></span>${rej>0?`<span class="rej-chip">${ic.x}${rej}</span>`:`<span class="mut mono">${pct}%</span>`}</div><div class="prog ${done?'full':''}"><i style="width:${done?100:pct}%"></i></div></div>
+    <div class="act-cell" style="text-align:right">${right}</div>
+  </div>`;
+}
+
+/* ============================================================ PRODUCTS ============================================================ */
+function productsPage(){
+  const q=prodQuery.trim().toLowerCase();
+  const list=PRODUCTS.filter(p=>!q||p.name.toLowerCase().includes(q)||p.code.toLowerCase().includes(q)||p.mat.toLowerCase().includes(q));
+  return `
+  <div class="page-intro"><div class="pt">Your catalogue with per-machine estimated cycle time and rate — used for orders, time &amp; billing.</div>
+    <button class="btn btn-accent" onclick="openProductModal()">${ic.plus}Add product</button></div>
+  <div class="toolbar"><div class="count-note">Showing <b>${list.length}</b> of <b>${TOTAL_PRODUCTS}</b> products</div></div>
+  <div class="card"><div class="tbl-wrap"><table class="data">
+    <thead><tr><th>Code</th><th>Product</th><th>Material</th><th>Est. time / pc (per machine)</th><th class="r">Rate</th></tr></thead>
+    <tbody>${list.map(p=>`<tr><td><span class="code-chip" style="display:inline-block;padding:6px 11px">${p.code}</span></td>
+      <td style="font-weight:600">${p.name}</td><td><span class="matchip">${p.mat}</span></td>
+      <td>${Object.keys(p.est).length?Object.entries(p.est).map(([mm,s])=>`<span class="timepill" style="margin:1px 3px 1px 0">${mm} ${fmtMS(s)}</span>`).join(""):'<span class="count-note">not set</span>'}</td>
+      <td class="r mono" style="font-weight:600">${inr(p.rate)}</td></tr>`).join("")}</tbody>
+  </table></div></div>
+  <div class="info-band" style="margin-top:16px">${ic.clock}<div>Workers set or correct the <b>estimated time in minutes &amp; seconds</b> for each machine from their phone while running a job — the latest value is saved back here.</div></div>`;
+}
+
+/* ============================================================ MACHINES ============================================================ */
+function machinesPage(){
+  const active=MACHINES.filter(m=>m.active).length;
+  const cards=MACHINES.map(m=>{const w=m.worker?workerOf(m.worker):null;const job=JOBS.find(j=>curSetup(j).machine===m.id&&j.status==="run");const u=UTIL[m.id]||0;const col=u>75?'var(--done)':u>40?'var(--accent)':u>0?'var(--ready)':'var(--fg-faint)';
+    return `<div class="mcard"><div class="mh"><span class="mid">${m.id}</span><span class="pill ${job?'s-run':'s-idle'}"><span class="d"></span>${job?'Running':'Idle'}</span></div>
+      <div class="mn">${m.name}</div><div class="mt2">${m.type}</div>
+      <div class="mrun">${ic.users}${w?w.name:'<span style="color:var(--fg-faint)">No operator assigned</span>'}</div>
+      ${job?`<div class="mrun">${ic.clock}${productOf(job.product).name} · <span class="timepill">${fmtMS(curSetup(job).estSec)}/pc</span></div>`:''}
+      <div class="ubar"><i style="width:${u}%;background:${col}"></i></div><div class="uv"><span>Utilisation</span><span>${u}%</span></div></div>`;}).join("");
+  const slots=[];for(let i=active+1;i<=MAX_MACHINES;i++)slots.push(`<div class="mcard slot">${ic.plus}<div>Machine slot ${i}<br><span style="font-size:11px">available</span></div><button class="btn btn-sm" onclick="addMachine()">Activate</button></div>`);
+  return `
+  <div class="page-intro"><div class="pt">You run 5 machines today — the system is set up for up to 10. Add more anytime.</div>
+    <div class="count-note"><b>${active}</b> active · <b>${MAX_MACHINES}</b> capacity</div></div>
+  <div class="mgrid">${cards}${slots.join("")}</div>`;
+}
+function addMachine(){const active=MACHINES.filter(m=>m.active).length;if(active>=MAX_MACHINES){toast("Limit reached","Up to "+MAX_MACHINES+" machines");return;}const id="M-"+(MACHINES.length+1);MACHINES.push({id,name:"New machine",type:"Unassigned",worker:null,active:true});UTIL[id]=0;renderContent();toast("Machine added",id+" is now active");}
+
+/* ============================================================ PARTIES ============================================================ */
+function partiesPage(){
+  return `
+  <div class="page-intro"><div class="pt">Each party has one code. Only you see the name — a worker phone can never load it.</div>
+    <button class="btn btn-accent" onclick="openPartyModal()">${ic.plus}Add party</button></div>
+  <div class="card"><div class="tbl-wrap"><table class="data">
+    <thead><tr><th>Code</th><th>Party name</th><th>Contact</th><th>Open orders</th><th></th></tr></thead>
+    <tbody>${PARTIES.map(p=>{const open=JOBS.filter(j=>j.pcode===p.code&&j.status!=="closed").length;
+      return `<tr><td><span class="code-chip" style="display:inline-block;padding:6px 12px">${p.code}</span></td>
+      <td><span style="font-weight:600">${p.name}</span> <span class="hidden-tag">hidden from floor</span></td>
+      <td class="mono" style="color:var(--fg-dim)">${p.phone}</td><td class="mono">${open}</td>
+      <td class="r"><button class="btn btn-ghost btn-sm">Edit</button></td></tr>`;}).join("")}</tbody>
+  </table></div></div>`;
+}
+
+/* ============================================================ WORKERS ============================================================ */
+function workersPage(){
+  return `
+  <div class="page-intro"><div class="pt">You create each login and assign a machine. No sign-up — just hand over an ID and PIN.</div>
+    <button class="btn btn-accent" onclick="openWorkerModal()">${ic.plus}Add worker</button></div>
+  <div class="card"><div class="tbl-wrap"><table class="data">
+    <thead><tr><th>Worker</th><th>Login ID</th><th>PIN</th><th>Machine</th><th>Jobs</th><th></th></tr></thead>
+    <tbody>${WORKERS.map(w=>{const n=JOBS.filter(j=>j.worker===w.id).length;
+      return `<tr><td><div style="display:flex;align-items:center;gap:10px"><span class="av2">${w.initials}</span><span style="font-weight:600">${w.name}</span></div></td>
+      <td class="mono">${w.id}</td><td class="mono"><span class="hidden-tag" style="letter-spacing:.15em">${w.pin||'—'}</span></td><td class="mono">${w.machine}</td><td class="mono">${n}</td>
+      <td class="r"><button class="btn btn-ghost btn-sm" onclick="openApp('worker','${w.id}')">Open phone view</button></td></tr>`;}).join("")}</tbody>
+  </table></div></div>`;
+}
+
+/* ============================================================ REWORK ============================================================ */
+function reworkPage(){
+  const r=JOBS.filter(j=>totalRej(j)>0);
+  return `
+  <div class="page-intro"><div class="pt">Every rejected unit is traced to the worker, the machine/setup it failed at, and their reason.</div></div>
+  <div class="card">${r.length?r.map(j=>{const w=workerOf(j.worker);
+    const lines=j.setups.map((s,i)=>s.rejected>0?`<div class="rework-line"><span class="sn">${s.machine} · Setup ${i+1}</span><span class="rr"><b>${s.rejected} unit(s)</b>${s.reason?` — "${s.reason}"`:` — no reason noted`}</span></div>`:"").join("");
+    return `<div class="rework-card"><div class="rework-top"><span class="code-chip" style="padding:6px 12px">${j.pcode}</span>
+      <div style="flex:1;min-width:120px"><div style="font-weight:600;font-size:13.5px">${productOf(j.product).name}</div><div class="ord-sub">Made by <b style="color:var(--fg)">${w.name}</b> · ${w.machine}</div></div>
+      <div style="text-align:right"><div class="mono" style="color:var(--reject);font-weight:700;font-size:15px">${totalRej(j)} to redo</div>
+      <button class="btn btn-sm" style="margin-top:6px" onclick="toast('Rework sent','${totalRej(j)} units of ${j.pcode} pushed back to ${w.name}')">Send to redo</button></div></div>
+      <div>${lines}</div></div>`;}).join(""):`<div class="empty">No rejected units right now — the floor is clean.</div>`}</div>`;
+}
+
+/* ============================================================ ACCOUNTING ============================================================ */
+function accountingPage(){
+  const m=acct();const billed=Object.values(m).reduce((s,x)=>s+x.billed,0),received=Object.values(m).reduce((s,x)=>s+x.received,0),outstanding=billed-received;
+  const miniStat=(l,v,c,s,icn)=>`<div class="stat"><div class="sl"><span class="si" style="background:${c}20;color:${c}">${ic[icn]}</span>${l}</div><div class="sv">${v}</div><div class="sf">${s}</div></div>`;
+  return `
+  <div class="page-intro"><div class="pt">Party-wise billing for completed work, payments received and what's still outstanding.</div>
+    <button class="btn btn-accent" onclick="openPaymentModal()">${ic.plus}Record payment</button></div>
+  <div class="grid cols-4" style="margin-bottom:16px">
+    ${miniStat("Billed (period)",inr(billed),"#2f6bff",BILLS.length+" completed orders","rupee")}
+    ${miniStat("Received",`<span style='color:var(--done)'>${inr(received)}</span>`,"#0f9d58",PAYMENTS.length+" payments","wallet")}
+    ${miniStat("Outstanding",`<span style='color:var(--ready)'>${inr(outstanding)}</span>`,"#d98a00","to collect","clock")}
+    ${miniStat("Parties",PARTIES.length,"#6a5cff","active accounts","users")}
+  </div>
+  <div class="card" style="margin-bottom:16px"><div class="card-head"><h3><span class="hi">${ic.rupee}</span>Party ledger</h3></div><div class="tbl-wrap"><table class="data">
+    <thead><tr><th>Code</th><th>Party</th><th class="r">Orders</th><th class="r">Billed</th><th class="r">Received</th><th class="r">Outstanding</th></tr></thead>
+    <tbody>${PARTIES.map(p=>{const a=m[p.code],out=a.billed-a.received;
+      return `<tr><td><span class="code-chip" style="display:inline-block;padding:6px 11px">${p.code}</span></td><td style="font-weight:600">${p.name}</td>
+      <td class="r mono">${a.orders}</td><td class="r mono">${inr(a.billed)}</td><td class="r mono" style="color:var(--done)">${inr(a.received)}</td>
+      <td class="r mono" style="font-weight:700;color:${out>0?'var(--ready)':'var(--done)'}">${inr(out)}</td></tr>`;}).join("")}</tbody>
+  </table></div></div>
+  <div class="card"><div class="card-head"><h3><span class="hi">${ic.box}</span>Completed orders — billing</h3></div><div class="tbl-wrap"><table class="data">
+    <thead><tr><th>Date</th><th>Code</th><th>Product</th><th class="r">Qty</th><th class="r">Rate</th><th class="r">Amount</th></tr></thead>
+    <tbody>${BILLS.map(b=>`<tr><td class="mono" style="color:var(--fg-dim)">${b.date}</td><td><span class="code-chip" style="display:inline-block;padding:5px 9px">${b.pcode}</span></td>
+      <td style="font-weight:600">${productOf(b.product).name}</td><td class="r mono">${b.qty}</td><td class="r mono">${inr(b.rate)}</td><td class="r mono" style="font-weight:700">${inr(b.qty*b.rate)}</td></tr>`).join("")}</tbody>
+  </table></div></div>
+  <div class="info-band" style="margin-top:16px">${ic.rupee}<div>Billing is <b>accepted quantity × product rate</b>. GST invoicing &amp; Tally export can be added in the production build.</div></div>`;
+}
+
+/* ============================================================ REPORTS ============================================================ */
+let reportMonth="Nov 2026";
+function reportsPage(){
+  const m=acct();const revenue=Object.values(m).reduce((s,x)=>s+x.billed,0);
+  const unitsOK=BILLS.reduce((s,b)=>s+b.qty,0),rej=JOBS.reduce((s,j)=>s+totalRej(j),0);
+  const machHrs=JOBS.reduce((s,j)=>s+curSetup(j).estSec*j.qty,0)/3600;
+  const byProduct={};BILLS.forEach(b=>{byProduct[b.product]=(byProduct[b.product]||0)+b.qty*b.rate;});
+  const topProd=Object.entries(byProduct).sort((a,b)=>b[1]-a[1]);const maxv=topProd[0]?topProd[0][1]:1;
+  const months=["Nov 2026","Oct 2026","Sep 2026","Aug 2026","Jul 2026","Jun 2026"];
+  const kpi=(l,v,c,s)=>`<div class="stat"><div class="sl">${l}</div><div class="sv" style="${c?`color:${c}`:''}">${v}</div><div class="sf">${s}</div></div>`;
+  return `
+  <div class="page-intro"><div class="pt">Month-end production report, and automatic data backup kept for 5 years.</div>
+    <div class="seg2">${["Nov 2026","Oct 2026"].map(mo=>`<button class="${reportMonth===mo?'on':''}" onclick="reportMonth='${mo}';renderContent()">${mo}</button>`).join("")}</div></div>
+  <div class="card" style="margin-bottom:16px"><div class="card-head"><h3><span class="hi">${ic.chart}</span>Monthly report — ${reportMonth}</h3>
+    <span style="display:flex;gap:8px"><button class="btn btn-sm" onclick="toast('Report ready','${reportMonth} report downloaded as PDF')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>PDF</button><button class="btn btn-sm" onclick="toast('Export ready','${reportMonth} report exported as CSV')">CSV</button></span></div>
+    <div class="card-pad"><div class="grid cols-4">
+      ${kpi("Orders completed",BILLS.length,"","this month")}
+      ${kpi("Units accepted",unitsOK.toLocaleString("en-IN"),"var(--done)","good pieces")}
+      ${kpi("Units rejected",rej,"var(--reject)","reworked")}
+      ${kpi("Revenue",inr(revenue),"var(--done)","billed")}
+    </div></div></div>
+  <div class="grid cols-2" style="margin-bottom:16px">
+    <div class="card"><div class="card-head"><h3><span class="hi">${ic.box}</span>Top products by value</h3><span class="meta">${reportMonth}</span></div>
+      <div class="card-pad">${topProd.map(([c,v])=>`<div class="hbar"><span class="hl">${productOf(c).name}</span><span class="ht"><i style="width:${Math.round(v/maxv*100)}%"></i></span><span class="hv">${inr(v)}</span></div>`).join("")}</div></div>
+    <div class="card"><div class="card-head"><h3><span class="hi">${ic.clock}</span>Machine time &amp; output</h3><span class="meta">estimated</span></div>
+      <div class="card-pad">
+        <div class="metricrow"><span class="ml">Est. machine hours (running)</span><span class="mv">${machHrs.toFixed(1)} h</span></div>
+        <div class="metricrow"><span class="ml">Avg. cycle time / pc</span><span class="mv">${fmtMS(Math.round(JOBS.reduce((s,j)=>s+curSetup(j).estSec,0)/JOBS.length))}</span></div>
+        <div class="metricrow"><span class="ml">Active machines</span><span class="mv">${MACHINES.filter(x=>x.active).length} / ${MAX_MACHINES}</span></div>
+        <div class="metricrow"><span class="ml">Operators</span><span class="mv">${WORKERS.length}</span></div>
+      </div></div>
+  </div>
+  <div class="card"><div class="card-head"><h3><span class="hi">${ic.box}</span>Data backup &amp; retention</h3><span class="meta">auto · daily</span></div>
+    <div class="card-pad">
+      <div class="info-band" style="margin-bottom:14px">${ic.chart}<div>Automatic <b>daily backup</b> of all orders, products, time logs and accounting. Data is retained for <b>5 years (60 months)</b> and can be exported anytime.</div></div>
+      <div class="overline">Recent monthly snapshots</div>
+      ${months.map((mo,i)=>`<div class="snap"><span class="si">${ic.box}</span><div class="sg"><div style="font-weight:600;font-size:12.5px">${mo} snapshot</div><div class="sm">Orders, time logs &amp; accounting · ${(2.4-i*0.2).toFixed(1)} MB</div></div><button class="btn btn-ghost btn-sm" onclick="toast('Download started','${mo} backup is being prepared')">Download</button></div>`).join("")}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">${["2026","2025","2024","2023","2022"].map(y=>`<button class="btn btn-sm" onclick="toast('Yearly export','Full ${y} data archive exported')">Export ${y}</button>`).join("")}</div>
+    </div></div>`;
+}
+
+/* ============================================================ WORKER ============================================================ */
+function workerView(){
+  const w=workerOf(session.workerId);const my=JOBS.filter(j=>j.worker===session.workerId);
+  const active=my.filter(j=>j.status==="run"||j.status==="idle").length;
+  const chips=WORKERS.map(x=>`<button class="${x.id===session.workerId?'on':''}" onclick="openApp('worker','${x.id}')">${x.name.split(" ")[0]}</button>`).join("");
+  return `<div class="wshell">
+    <div class="wtop"><div class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg></div>
+      <div><div class="wn">Alive Engineering</div><div class="wr2">Worker app</div></div>
+      <span style="flex:1"></span>
+      <button class="ic-btn" onclick="toggleTheme()" aria-label="Theme"><svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
+      <button class="ic-btn" onclick="logout()" aria-label="Exit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg></button>
+    </div>
+    <div class="demo-switch"><div class="eyebrow" style="margin-bottom:7px">Demo — try another worker</div><div class="seg">${chips}</div></div>
+    <div class="whero"><div class="wav">${w.initials}</div><div><div class="hi">Hi, ${w.name.split(" ")[0]}</div><div class="mt">Machine ${w.machine}</div></div><div class="cnt"><b>${active}</b><span>jobs to do</span></div></div>
+    ${my.length?my.map(workerCard).join(""):`<div class="empty">No jobs assigned to you yet.</div>`}
+  </div>`;
+}
+function workerCard(j){
+  const done=j.status==="done"||j.status==="closed";const s=curSetup(j),pct=Math.round(s.made/j.qty*100);
+  let dots="";for(let n=1;n<=MAX_SETUPS;n++){let cls=done?(n<=j.finalAt?"done":"future"):(n<j.cur?"done":n===j.cur?"active":"future");dots+=`<div class="setup-dot ${cls}">${cls==="done"?ic.check:n}</div>`;}
+  return `<div class="jobcard ${s.rejected>0&&!done?'is-reject':''}">
+    <div class="jc-top"><div><div class="jc-code">${j.pcode}</div><div class="jc-part">${productOf(j.product).name}</div></div><span class="pill ${STATUS[j.status].cls}"><span class="d"></span>${STATUS[j.status].label}</span></div>
+    <div class="setups-row"><div class="setups">${dots}</div><div class="setups-label">${done?`Completed at Setup ${j.finalAt}`:`Setup ${j.cur} · ${s.machine}`}</div></div>
+    ${done?`<div class="done-banner">${ic.check}Work complete<small>Admin notified — order ${j.pcode} done at Setup ${j.finalAt}</small></div>`
+    :`${s.rejected>0?`<div class="reject-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg><div>You rejected <b>${s.rejected} unit(s)</b> on this setup.${s.reason?` <span class="why">(${s.reason})</span>`:''}</div></div>`:""}
+      <div class="est-row"><div><div class="el">Est. time / unit on <b>${s.machine}</b></div><div class="es">Order of ${j.qty} pcs ≈ ${estDur(s.estSec,j.qty)}</div></div><button class="tap-time" onclick="openEst(${j.id})">${ic.clock}${fmtMS(s.estSec)}</button></div>
+      <div class="jc-big"><div class="num">${s.made}<span class="of"> / ${j.qty}</span></div><div class="lbl">units made · Setup ${j.cur}</div><div class="jc-bar ${pct>=100?'full':''}"><i style="width:${pct}%"></i></div></div>
+      ${j.status==="idle"?`<button class="btn btn-accent btn-block" style="margin-top:16px" onclick="startJob(${j.id})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Start this job</button>`
+      :`<div class="stepper"><button onclick="bump(${j.id},-1)">−</button><div class="val"><b id="val-${j.id}">${s.made}</b><span>made this setup</span></div><button onclick="bump(${j.id},1)">+</button></div>
+        <div class="reject-row"><span>Rejected this setup: <b>${s.rejected}</b></span><button class="btn btn-sm btn-danger" onclick="openReject(${j.id})">${ic.x}Reject units</button></div>
+        <div class="setup-actions ${j.cur<MAX_SETUPS?'two':''}">${j.cur<MAX_SETUPS?`<button class="btn" onclick="nextSetup(${j.id})">Next setup <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button>`:""}
+          <button class="btn btn-accent" onclick="openFinal(${j.id})">${ic.check}Final setup — done</button></div>`}`}
+  </div>`;
+}
+function bump(id,d){const j=JOBS.find(x=>x.id===id);if(!j)return;const s=curSetup(j);s.made=Math.max(0,Math.min(j.qty,s.made+d));if(j.status==="idle"&&s.made>0)j.status="run";const el=document.getElementById("val-"+id);if(el)el.textContent=s.made;const bar=el?.closest(".jobcard")?.querySelector(".jc-bar");const i=bar?.querySelector("i");if(i){const pct=Math.round(s.made/j.qty*100);i.style.width=pct+"%";bar.classList.toggle("full",pct>=100);}}
+function startJob(id){const j=JOBS.find(x=>x.id===id);if(j){j.status="run";render();toast("Job started","Admin can now see "+j.pcode+" is in progress");}}
+function nextSetup(id){const j=JOBS.find(x=>x.id===id);if(!j||j.cur>=MAX_SETUPS)return;j.cur++;if(!j.setups[j.cur-1]){const mc=workerOf(j.worker).machine;j.setups.push({machine:mc,made:0,rejected:0,reason:"",estSec:productOf(j.product).est[mc]||0});}render();toast("Moved to Setup "+j.cur,j.pcode+" is now on Setup "+j.cur);}
+
+/* worker: est time */
+let estM=0,estS=0,curEstJob=null;
+function openEst(id){curEstJob=JOBS.find(x=>x.id===id);const j=curEstJob,s=curSetup(j);estM=Math.floor(s.estSec/60);estS=s.estSec%60;
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi violet">${ic.clock}</div><div><h3>Estimated time per unit</h3><p>${j.pcode} — ${productOf(j.product).name} · ${s.machine}</p></div></div>
+    <div class="modal-body"><div class="field"><label>Time printed / estimated on the machine (per piece)</label>
+      <div class="time-input"><div class="ti"><div class="mini-step"><button onclick="estStep('m',-1)">−</button><div class="v" id="estM">${pad2(estM)}</div><button onclick="estStep('m',1)">+</button></div></div><span class="sep">min</span>
+        <div class="ti"><div class="mini-step"><button onclick="estStep('s',-5)">−</button><div class="v" id="estS">${pad2(estS)}</div><button onclick="estStep('s',5)">+</button></div></div><span class="sep">sec</span></div>
+      <div class="hint">Order of ${j.qty} pcs ≈ <b id="estTot">${estDur(estM*60+estS,j.qty)}</b> of machine time. Saved to this product &amp; machine.</div></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-accent" onclick="saveEst(${id},this)">Save time</button></div></div>`);}
+function estStep(f,d){if(f==="m")estM=Math.max(0,Math.min(59,estM+d));else{estS+=d;if(estS>55){estS=0;estM=Math.min(59,estM+1);}if(estS<0){estS=55;estM=Math.max(0,estM-1);}}document.getElementById("estM").textContent=pad2(estM);document.getElementById("estS").textContent=pad2(estS);if(curEstJob)document.getElementById("estTot").textContent=estDur(estM*60+estS,curEstJob.qty);}
+function saveEst(id,btn){const j=JOBS.find(x=>x.id===id),s=curSetup(j);s.estSec=estM*60+estS;productOf(j.product).est[s.machine]=s.estSec;closeScrim(btn);render();toast("Time saved",`${s.machine}: ${fmtMS(s.estSec)}/pc for ${productOf(j.product).name}`);}
+
+/* worker: reject */
+let rejQty=1;
+function openReject(id){const j=JOBS.find(x=>x.id===id);rejQty=1;
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi danger">${ic.x}</div><div><h3>Reject units</h3><p>${j.pcode} — ${productOf(j.product).name} · ${curSetup(j).machine} · Setup ${j.cur}</p></div></div>
+    <div class="modal-body"><div class="field"><label>How many units to reject</label><div class="mini-step"><button onclick="rejStep(-1)">−</button><div class="v" id="rejv">1</div><button onclick="rejStep(1)">+</button></div></div>
+      <div class="field"><label>Reason note (optional)</label><textarea id="rej-reason" placeholder="e.g. burr on face, bore undersize, wrong dimension…"></textarea><div class="hint">Admin sees this on the Rework screen.</div></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-danger" onclick="confirmReject(${id},this)">${ic.x}Reject <span id="rejlbl">1</span></button></div></div>`);}
+function rejStep(d){rejQty=Math.max(1,rejQty+d);document.getElementById("rejv").textContent=rejQty;document.getElementById("rejlbl").textContent=rejQty;}
+function confirmReject(id,btn){const j=JOBS.find(x=>x.id===id),s=curSetup(j),reason=(document.getElementById("rej-reason").value||"").trim();s.rejected+=rejQty;if(reason)s.reason=reason;closeScrim(btn);render();toastRej(rejQty+" unit(s) rejected",j.pcode+" "+s.machine+(reason?` — "${reason}"`:""));}
+
+/* worker: final */
+function openFinal(id){const j=JOBS.find(x=>x.id===id),s=curSetup(j);
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi">${ic.check}</div><div><h3>Mark work complete?</h3><p>This tells the admin the part is finished.</p></div></div>
+    <div class="modal-body"><div class="send-to"><div><div style="font-weight:600">${j.pcode} — ${productOf(j.product).name}</div><div class="ord-sub">Finishing at <b style="color:var(--fg)">Setup ${j.cur}</b> · ${s.machine} · ${s.made} units</div></div><span class="code-chip" style="padding:6px 12px">${j.pcode}</span></div>
+      <div class="field hint" style="margin:0">Press this on whichever setup finishes the part — not every unit needs all ${MAX_SETUPS} setups.</div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Not yet</button><button class="btn btn-accent" onclick="confirmFinal(${id},this)">${ic.check}Yes, work is complete</button></div></div>`);}
+function confirmFinal(id,btn){const j=JOBS.find(x=>x.id===id),s=curSetup(j);j.status="done";j.finalAt=j.cur;const now=new Date();NOTIFS.push({id:Date.now(),worker:j.worker,pcode:j.pcode,product:j.product,setup:j.cur,made:s.made,time:"Today "+now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:false}),read:false});closeScrim(btn);render();toast("Sent to admin","Work on "+j.pcode+" complete at Setup "+j.cur+" — admin notified");}
+
+/* ============================================================ ADMIN MODALS ============================================================ */
+function scrim(html){const d=document.createElement("div");d.className="scrim";d.innerHTML=html;d.addEventListener("click",e=>{if(e.target===d)d.remove();});document.body.appendChild(d);return d;}
+function closeScrim(el){(el.closest?el.closest(".scrim"):el).remove();}
+function openJobModal(){
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi">${ic.plus}</div><div><h3>New order</h3><p>Pick a product &amp; party, set quantity, assign a worker / machine.</p></div></div>
+    <div class="modal-body"><div class="field"><label>Product</label><select id="f-prod">${PRODUCTS.map(p=>`<option value="${p.code}">${p.code} — ${p.name}</option>`).join("")}</select><div class="hint">200+ products; cycle time &amp; rate come from the product.</div></div>
+      <div class="field"><label>Party</label><select id="f-party">${PARTIES.map(p=>`<option value="${p.code}">${p.code} — ${p.name}</option>`).join("")}</select><div class="hint">The worker will only see the code.</div></div>
+      <div class="row"><div class="field"><label>Quantity</label><input id="f-qty" type="number" value="100"></div><div class="field"><label>Worker / machine</label><select id="f-worker">${WORKERS.map(w=>`<option value="${w.id}">${w.name} — ${w.machine}</option>`).join("")}</select></div></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-accent" onclick="addJob(this)">Add order</button></div></div>`);}
+function addJob(btn){const code=document.getElementById("f-prod").value,pcode=document.getElementById("f-party").value,qty=parseInt(document.getElementById("f-qty").value)||50,worker=document.getElementById("f-worker").value||"raju01",mc=workerOf(worker).machine,est=productOf(code).est[mc]||0;JOBS.unshift({id:Date.now(),product:code,pcode,qty,worker,status:"idle",cur:1,finalAt:null,setups:[{machine:mc,made:0,rejected:0,reason:"",estSec:est}]});closeScrim(btn);adminTab="orders";render();toast("Order added",pcode+" · "+productOf(code).name+" on "+mc);}
+function openProductModal(){
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi">${ic.box}</div><div><h3>Add product</h3><p>Add to your catalogue with rate and per-machine time.</p></div></div>
+    <div class="modal-body"><div class="row"><div class="field"><label>Code</label><input id="p-code" placeholder="BKT-55" class="mono"></div><div class="field"><label>Material</label><input id="p-mat" placeholder="SS304"></div></div>
+      <div class="field"><label>Product name</label><input id="p-name" placeholder="Bracket BKT-55"></div>
+      <div class="row"><div class="field"><label>Rate (₹ / pc)</label><input id="p-rate" type="number" value="50"></div><div class="field"><label>Est. time on M-1 (mm:ss)</label><input id="p-est" placeholder="01:30" class="mono"></div></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-accent" onclick="addProduct(this)">Save product</button></div></div>`);}
+function addProduct(btn){const code=(document.getElementById("p-code").value||"NEW-00").toUpperCase(),name=document.getElementById("p-name").value||"New product",mat=document.getElementById("p-mat").value||"MS",rate=parseInt(document.getElementById("p-rate").value)||0,t=(document.getElementById("p-est").value||"").split(":"),est={};if(t.length===2){const sec=(parseInt(t[0])||0)*60+(parseInt(t[1])||0);if(sec)est["M-1"]=sec;}PRODUCTS.unshift({code,name,mat,rate,est});closeScrim(btn);renderContent();toast("Product added",name+" added to catalogue");}
+function openPartyModal(){
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div><h3>Add party</h3><p>The code goes to the floor. The name stays with you.</p></div></div>
+    <div class="modal-body"><div class="field"><label>Party name</label><input placeholder="Shah Metal Works"></div><div class="row"><div class="field"><label>Code</label><input placeholder="P-21" class="mono"></div><div class="field"><label>Contact</label><input placeholder="+91 ..." class="mono"></div></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-accent" onclick="closeScrim(this);toast('Party added','Saved — only the code goes to the floor')">Save</button></div></div>`);}
+function openWorkerModal(){
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div><div><h3>Add worker</h3><p>You set the login and machine.</p></div></div>
+    <div class="modal-body"><div class="field"><label>Name</label><input placeholder="Mahesh Solanki"></div><div class="row"><div class="field"><label>Login ID</label><input placeholder="mahesh05" class="mono"></div><div class="field"><label>PIN</label><input placeholder="4 digits" class="mono"></div></div>
+      <div class="field"><label>Machine</label><select>${MACHINES.map(m=>`<option>${m.id} — ${m.name}</option>`).join("")}</select></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-accent" onclick="closeScrim(this);toast('Worker added','Login created — share the ID &amp; PIN')">Create login</button></div></div>`);}
+function openPaymentModal(){
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi">${ic.rupee}</div><div><h3>Record payment</h3><p>Mark money received against a party.</p></div></div>
+    <div class="modal-body"><div class="field"><label>Party</label><select id="pay-party">${PARTIES.map(p=>`<option value="${p.code}">${p.code} — ${p.name}</option>`).join("")}</select></div>
+      <div class="row"><div class="field"><label>Amount (₹)</label><input id="pay-amt" type="number" value="5000"></div><div class="field"><label>Reference</label><input id="pay-ref" placeholder="UPI / NEFT ref" class="mono"></div></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-accent" onclick="addPayment(this)">Save payment</button></div></div>`);}
+function addPayment(btn){const pcode=document.getElementById("pay-party").value,amt=parseInt(document.getElementById("pay-amt").value)||0,ref=document.getElementById("pay-ref").value||"—",now=new Date(),date=now.toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});PAYMENTS.push({pcode,amount:amt,date,ref});closeScrim(btn);renderContent();toast("Payment recorded",inr(amt)+" received from "+partyOf(pcode).name);}
+function openNotify(id){const j=JOBS.find(x=>x.id===id),p=partyOf(j.pcode);
+  scrim(`<div class="modal"><div class="modal-head"><div class="mi">${ic.send}</div><div><h3>Order ready — notify party</h3><p>${productOf(j.product).name} is finished at Setup ${j.finalAt}.</p></div></div>
+    <div class="modal-body"><div class="field"><label>Sending to</label><div class="send-to"><div><div style="font-weight:600">${p.name}</div><div class="mono" style="font-size:12px;color:var(--fg-dim)">${p.phone}</div></div><span class="code-chip" style="padding:6px 12px">${j.pcode}</span></div></div>
+      <div class="field"><label>Message (SMS via your DLT sender)</label><div class="msg-preview"><div class="wa">${ic.send}SMS · Alive Engineering</div>Namaste ${p.name.split(" ")[0]} ji, your order <b>${j.pcode} — ${productOf(j.product).name}</b> is ready. You can collect your parts. — Alive Engineering</div></div></div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeScrim(this)">Cancel</button><button class="btn btn-accent" onclick="sendNotify(${id},this)">${ic.send}Send</button></div></div>`);}
+function sendNotify(id,btn){const j=JOBS.find(x=>x.id===id);j.status="closed";closeScrim(btn);render();toast("Party notified",partyOf(j.pcode).name+" told their order is ready");}
+
+/* bell / toast / theme */
+function renderBell(){const unread=NOTIFS.filter(n=>!n.read).length,badge=document.getElementById("bellBadge");if(!badge)return;badge.hidden=unread===0;badge.textContent=unread;
+  document.getElementById("bellPanel").innerHTML=`<div class="bell-head"><span>Completion alerts</span><span class="eyebrow">${NOTIFS.length} total</span></div><div class="bell-list">${NOTIFS.length?[...NOTIFS].reverse().map(n=>{const w=workerOf(n.worker);return `<div class="bell-item ${n.read?'':'unread'}"><div class="bi">${ic.check}</div><div><div class="bt">${w.name} finished ${n.pcode}</div><div class="bd">${productOf(n.product).name} · Setup ${n.setup} · ${n.made} units</div><div class="btime">${n.time}</div></div></div>`;}).join(""):`<div class="bell-empty">No completion alerts yet.</div>`}</div>`;}
+function toggleBell(e){if(e)e.stopPropagation();const panel=document.getElementById("bellPanel");const show=panel.hidden;panel.hidden=!show;if(show){NOTIFS.forEach(n=>n.read=true);renderBell();panel.hidden=false;}}
+document.addEventListener("click",e=>{const wrap=document.getElementById("bellWrap");if(wrap&&!wrap.contains(e.target)){const p=document.getElementById("bellPanel");if(p)p.hidden=true;}});
+function toast(title,desc){_toast(title,desc,false);}
+function toastRej(title,desc){_toast(title,desc,true);}
+function _toast(title,desc,rej){const t=document.createElement("div");t.className="toast"+(rej?" rej":"");const svg=rej?'<path d="M18 6 6 18M6 6l12 12"/>':'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4 12 14.01l-3-3"/>';t.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${svg}</svg><div><div class="tt">${title}</div><div class="td">${desc}</div></div>`;document.getElementById("toasts").appendChild(t);setTimeout(()=>{t.style.transition="opacity .4s,transform .4s";t.style.opacity="0";t.style.transform="translateX(16px)";setTimeout(()=>t.remove(),400);},3600);}
+function toggleTheme(){const cur=document.documentElement.getAttribute("data-theme")||"light",next=cur==="light"?"dark":"light";document.documentElement.setAttribute("data-theme",next);const el=document.getElementById("themeIcon");if(el){if(next==="dark")el.innerHTML='<path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/>';else el.innerHTML='<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';}if(window.__relitShop)window.__relitShop(next);}
+document.documentElement.setAttribute("data-theme","light");
+
+/* boot — prototype opens straight into the owner console (no login) */
+openApp("admin");
+
+</script>
+
+</body>
+</html>
