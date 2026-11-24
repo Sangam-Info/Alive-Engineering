@@ -1,0 +1,10 @@
+# wrangler.toml — deploys the Alive Engineering prototype as a static-assets Worker.
+# No server code, no real build step. Only the ./public folder is served,
+# so package.json / node_modules / wrangler.toml are never exposed.
+
+name = "alive-engineering"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "./public"
+not_found_handling = "single-page-application"

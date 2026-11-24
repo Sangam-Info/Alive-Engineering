@@ -1,0 +1,15 @@
+{
+  "name": "alive-engineering",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Alive Engineering production-control prototype (static site).",
+  "scripts": {
+    "build": "echo \"No build step needed — static site.\"",
+    "dev": "echo \"No dev step needed — static site.\"",
+    "start": "echo \"Static site — open public/index.html.\"",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
